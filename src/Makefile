@@ -1,9 +1,14 @@
 
-CXXFLAGS += -std=c++0x -g -Wall
+CXXFLAGS += -I../include -std=c++0x -g -Wall
+
+MAKEFILEDIR = $(lastword $(MAKEFILE_LIST))
 
 all: skype-dbb-read
 
-skype-dbb-read: main.o skypelog-reader.o
+libskypelog-reader.a: skypelog-reader.o
+	$(AR) rcs $@ $^
+
+skype-dbb-read: main.o libskypelog-reader.a
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 clean:
