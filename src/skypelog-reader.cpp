@@ -46,6 +46,10 @@ E0 03 23 -- -- -- ...   2F 34 -- -- -- ...   3B
 
 
 
+template<std::size_t N>
+constexpr std::pair<const char*,const char*> make_rangepair(const char (&a)[N])
+{ return {a, a+N-1}; }
+
 enum {
     SEC_START_REC = 0,
     SEC_START_CHAT,
@@ -58,16 +62,17 @@ enum {
     SEC_NUM_SECTIONS
 };
 
-const unsigned char sections[][10] = {
- /* start_rec  */  { 0x6C, 0x33, 0x33, 0x6C, 0x0 },
- /* // skip 14 */
- /* start_chat */  { 0xE0, 0x03, 0x0 },
- /* start_sender */  { 0x23, 0x00 },
- /* mem_sep    */  { 0x2F, 0x00 }, /* '/' */
- /* start_recipients */  { 0x34, 0x00 },
- /* end_membs  */  { 0x3B, 0x00 },
- /* start_time */  { 0xE5,  0x03, 0x0},
- /* start_msg  */  { 0xFC, 0x03, 0x0 } /* 0x0 term */
+
+const std::pair<const char*, const char*> sections[] = {
+    make_rangepair("\x6C\x33\x33\x6C"),  /* start_rec  */
+    /* // skip 14 */
+    make_rangepair("\xE0\x03"),  /* start_chat */
+    make_rangepair("\x23"),  /* start_sender */
+    make_rangepair("\x2F"),  /* mem_sep */
+    make_rangepair("\x34"),  /* start_recipients */
+    make_rangepair("\x3B"),  /* end_membs */
+    make_rangepair("\xE5\x03"),  /* start_time */
+    make_rangepair("\xFC\x03"),  /* start_msg */
 };
 
 const char prog[] = "skype-dbb-read";
@@ -89,10 +94,10 @@ time_t read_time(char* start)
 
 char *find_section(char *start, char *data, size_t len, int n)
 {
-    std::size_t seclen = strlen((const char *)sections[n]);
+    std::size_t seclen = sections[n].second - sections[n].first;
     char *pos = (char *) memmem(
         start, len - (start - data),
-        sections[n], seclen
+        sections[n].first, seclen
     );
 
     if(!pos) return NULL;
